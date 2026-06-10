@@ -1,0 +1,2 @@
+{"prompt":"Question: What does grouped-query attention reduce?\nAnswer:","response":" It reduces key/value projection and cache memory by sharing KV heads across query heads."}
+{"prompt":"Question: Where is RoPE applied?\nAnswer:","response":" RoPE rotates query and key feature pairs before the attention dot product."}

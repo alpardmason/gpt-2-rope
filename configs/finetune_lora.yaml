@@ -1,0 +1,48 @@
+model:
+  vocab_size: 50257
+  context_length: 128
+  d_model: 128
+  num_layers: 4
+  num_heads: 4
+  num_kv_heads: 2
+  dropout: 0.0
+
+data:
+  train_path: data/processed/train.bin
+  validation_path: null
+  tokenizer_dir: tokenizer
+  sequence_length: 128
+  num_workers: 0
+
+training:
+  output_dir: runs/tiny-sft
+  device: auto
+  micro_batch_size: 2
+  gradient_accumulation_steps: 4
+  max_steps: 1000
+  learning_rate: 0.0002
+  min_learning_rate: 0.00002
+  warmup_steps: 50
+  checkpoint_every: 100
+  eval_every: 100
+
+monitoring:
+  log_every: 5
+  tensorboard: true
+
+finetuning:
+  data_path: data/sft.jsonl
+  base_checkpoint: runs/tiny/checkpoints/step-00010000
+  max_length: 128
+  use_lora: true
+  lora_rank: 8
+  lora_alpha: 16.0
+  lora_dropout: 0.05
+  lora_targets:
+    - q_proj
+    - k_proj
+    - v_proj
+    - out_proj
+    - fc
+    - proj
+

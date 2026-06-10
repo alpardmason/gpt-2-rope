@@ -1,0 +1,41 @@
+model:
+  vocab_size: 50257
+  context_length: 128
+  d_model: 128
+  num_layers: 4
+  num_heads: 4
+  num_kv_heads: 2
+  dropout: 0.0
+
+data:
+  train_path: data/processed/train.bin
+  validation_path: null
+  tokenizer_dir: tokenizer
+  sequence_length: 128
+  num_workers: 0
+
+training:
+  output_dir: runs/tiny-dpo
+  device: auto
+  micro_batch_size: 2
+  gradient_accumulation_steps: 4
+  max_steps: 500
+  # DPO learning rates sit far below SFT; the KL anchor is easy to overpower.
+  learning_rate: 0.000005
+  min_learning_rate: 0.0000005
+  warmup_steps: 25
+  checkpoint_every: 100
+
+monitoring:
+  log_every: 5
+  tensorboard: true
+
+dpo:
+  data_path: examples/dpo_sample.jsonl
+  base_checkpoint: runs/tiny-sft/checkpoints/step-00001000
+  max_length: 128
+  beta: 0.1
+  use_lora: true
+  lora_rank: 8
+  lora_alpha: 16.0
+  lora_dropout: 0.0

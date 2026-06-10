@@ -1,0 +1,12 @@
+# Grid sweep over learning rate and warmup for the tiny pretraining config.
+# Run with: uv run gpt2-rope sweep run configs/sweeps/lr.yaml
+base_config: configs/tiny.yaml
+output_dir: runs/sweeps/lr
+method: grid
+seed: 1337
+objective: validation/loss
+minimize: true
+parameters:
+  training.learning_rate: [0.0003, 0.0006, 0.001]
+  training.warmup_steps: [100, 200]
+  training.max_steps: [500]

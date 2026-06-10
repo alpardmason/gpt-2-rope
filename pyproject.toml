@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gpt2-rope"
+version = "0.1.0"
+description = "Production-oriented GPT-2 with grouped-query attention and rotary embeddings"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "GPT-2-RoPE contributors" }]
+dependencies = [
+  "numpy>=2.0",
+  "pydantic>=2.10",
+  "pyyaml>=6.0",
+  "regex>=2024.11.6",
+  "safetensors>=0.5",
+  "tensorboard>=2.18",
+  "torch>=2.6",
+  "typer>=0.15",
+]
+
+[project.optional-dependencies]
+wandb = ["wandb>=0.19"]
+serving = [
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+]
+
+[project.scripts]
+gpt2-rope = "gpt2_rope.cli:main"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15",
+  "pytest>=8.3",
+  "pytest-cov>=6.0",
+  "ruff>=0.11",
+  "types-regex>=2024.11.6",
+  "types-pyyaml>=6.0",
+  "fastapi>=0.115",
+  "httpx>=0.28",
+  "uvicorn>=0.34",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gpt2_rope"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["gpt2_rope"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+markers = [
+  "cuda: requires CUDA hardware",
+  "mps: requires Apple Metal",
+  "distributed: distributed process test",
+]
