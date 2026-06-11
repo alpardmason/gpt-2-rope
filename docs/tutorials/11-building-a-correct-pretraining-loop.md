@@ -5,6 +5,8 @@
 Audit a training loop as a state machine with explicit ownership of gradients,
 data position, mode, metrics, and failure cleanup. Prerequisite: 04, 06, 10.
 
+**Practice companion:** [11-practice.md](practice/11-practice.md).
+
 **Source map:** [`training.py`](../../src/gpt2_rope/training.py)
 `evaluate`, `_infinite_loader`, `train_pretraining`;
 [`monitoring.py`](../../src/gpt2_rope/monitoring.py); and

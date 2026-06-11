@@ -114,3 +114,27 @@ test before running it, complete the lab, then answer the exercises without
 looking at the solution. A passing test proves a stated behavior for tested
 inputs; it does not prove numerical stability, scale, performance, or complete
 correctness.
+
+## Practice Loop
+
+Reading and running labs is recognition-level study. Retention requires
+retrieval, generation, and feedback against a hard oracle, so every chapter
+ships a practice companion in [practice/](practice/) and core chapters ship a
+reimplementation kata in [katas/](../../katas/).
+
+- **Tier 1 (every chapter, ~30-60 min).** The companion file
+  `practice/NN-practice.md` contains tracing tasks (CLI entry point to
+  internals), prediction tasks (commit to an outcome before running), and a
+  tool walkthrough. Deliverables are persisted to `notes/chapters/NN.md`
+  using [notes/templates/chapter-notes.md](../../notes/templates/chapter-notes.md);
+  a chapter is not complete until that file exists.
+- **Tier 2 (core chapters).** Chapters 03, 07, 08, 09, 13, and 22 each map to
+  a kata: the implementation is gutted on a dedicated branch and you
+  reimplement it against the unchanged production test suite. Start one with
+  `UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start <name>`
+  and see [katas/README.md](../../katas/README.md) for rules.
+- **Tier 3 (operational drills).** Planned; not yet scaffolded.
+
+The companion tasks assume you read the chapter first. Predictions are only
+useful if written before execution; a wrong prediction recorded honestly is
+worth more than a correct one written after the fact.

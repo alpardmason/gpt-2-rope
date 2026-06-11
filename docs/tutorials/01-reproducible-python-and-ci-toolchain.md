@@ -5,6 +5,8 @@
 Understand how Python, dependencies, static analysis, tests, and CI form one
 reproducibility boundary. Prerequisite: tutorial 00.
 
+**Practice companion:** [01-practice.md](practice/01-practice.md).
+
 **Source map:** [pyproject.toml](../../pyproject.toml),
 [uv.lock](../../uv.lock), [.python-version](../../.python-version),
 [CI](../../.github/workflows/ci.yml), and [.gitignore](../../.gitignore).

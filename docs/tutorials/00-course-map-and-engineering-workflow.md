@@ -5,6 +5,8 @@
 Learn to read this repository as a set of contracts rather than a pile of
 files. Prerequisite: a toy GPT-2 implementation and basic `pytest`.
 
+**Practice companion:** [00-practice.md](practice/00-practice.md).
+
 **Source map:** [README](../../README.md), [architecture](../architecture.md),
 [package API](../../src/gpt2_rope/__init__.py), [CLI](../../src/gpt2_rope/cli.py),
 [tests](../../tests/), and [CI](../../.github/workflows/ci.yml).

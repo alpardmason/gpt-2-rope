@@ -5,6 +5,8 @@
 Turn experiment settings into validated, immutable, serializable contracts.
 Prerequisite: tutorials 00-01 and basic Pydantic.
 
+**Practice companion:** [02-practice.md](practice/02-practice.md).
+
 **Source map:** [`config.py`](../../src/gpt2_rope/config.py) symbols
 `StrictConfig`, `ModelConfig`, `TrainingConfig`, `ExperimentConfig`;
 [`config_io.py`](../../src/gpt2_rope/config_io.py)

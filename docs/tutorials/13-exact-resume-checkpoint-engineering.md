@@ -6,6 +6,8 @@ Distinguish inference weights from a training transaction and reason about
 atomic publication, RNG, iterator progress, and artifact compatibility.
 Prerequisite: 11-12.
 
+**Practice companion:** [13-practice.md](practice/13-practice.md).
+
 **Source map:** [`checkpoint.py`](../../src/gpt2_rope/checkpoint.py)
 `CheckpointState`, `_rng_state`, `save_checkpoint`, `load_checkpoint`,
 `export_safetensors`; [`test_checkpoint.py`](../../tests/test_checkpoint.py);
@@ -111,6 +113,13 @@ single-filesystem rename assumptions.
 Define “resume” precisely: next data, next RNG draws, next LR, optimizer
 moments, scaler, and progress must agree. Test interrupted versus uninterrupted
 trajectories, not only parameter loading.
+
+## Reimplementation Kata
+
+Tier 2: rebuild atomic save, complete restore, RNG capture, and the
+safetensors export against the resume-reproducibility test. Start with
+`UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start checkpoint`
+and follow [katas/checkpoint/README.md](../../katas/checkpoint/README.md).
 
 ## Further Exploration
 

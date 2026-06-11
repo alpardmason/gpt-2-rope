@@ -6,6 +6,8 @@ Build and reason about the three scoring primitives behind every LLM
 leaderboard: windowed perplexity, length-normalized choice logprobs, and
 exact-match generation probes. Prerequisite: 09, 11, 14.
 
+**Practice companion:** [20-practice.md](practice/20-practice.md).
+
 **Source map:** [`evaluation.py`](../../src/gpt2_rope/evaluation.py)
 `evaluate_perplexity_files`, `continuation_logprob`,
 `evaluate_multiple_choice`, `build_passkey_samples`, `evaluate_passkey`;

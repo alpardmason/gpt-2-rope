@@ -6,6 +6,8 @@ Run controlled architecture ablations with config switches instead of code
 forks, and defend each default with evidence. Prerequisite: 06-11, plus the
 RoPE, pre-norm, and GQA papers.
 
+**Practice companion:** [17-practice.md](practice/17-practice.md).
+
 **Source map:** [`config.py`](../../src/gpt2_rope/config.py)
 `position_encoding`, `norm_placement`, `num_kv_heads`;
 [`model.py`](../../src/gpt2_rope/model.py) `GPT.position_embedding`,

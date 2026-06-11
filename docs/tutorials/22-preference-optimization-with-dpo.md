@@ -7,6 +7,8 @@ chosen/rejected pairs against a frozen reference model, without a reward
 model or reinforcement-learning rollouts. Prerequisite: 05, 15; read the DPO
 paper for the derivation -- this chapter covers the system.
 
+**Practice companion:** [22-practice.md](practice/22-practice.md).
+
 **Source map:** [`dpo.py`](../../src/gpt2_rope/dpo.py) `PreferenceDataset`,
 `sequence_logprobs`, `dpo_loss`, `train_dpo`;
 [`config.py`](../../src/gpt2_rope/config.py) `DPOConfig`;
@@ -130,6 +132,13 @@ Alignment losses are cheap to implement and expensive to monitor. Log the
 reward decomposition, sample generations on a schedule, and treat "margin up"
 as necessary but never sufficient. Always ask of any preference method: what
 anchors the policy, and what is the exchange rate?
+
+## Reimplementation Kata
+
+Tier 2: rebuild `sequence_logprobs` and `dpo_loss` -- the paper-to-code core
+-- against the masking, margin, and smoke tests. Start with
+`UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start dpo-loss`
+and follow [katas/dpo-loss/README.md](../../katas/dpo-loss/README.md).
 
 ## Further Exploration
 

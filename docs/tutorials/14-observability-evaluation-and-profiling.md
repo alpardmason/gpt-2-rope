@@ -5,6 +5,8 @@
 Design evidence for training health, model behavior, and systems performance
 without allowing optional telemetry to kill the run. Prerequisite: 10-13.
 
+**Practice companion:** [14-practice.md](practice/14-practice.md).
+
 **Source map:** [`monitoring.py`](../../src/gpt2_rope/monitoring.py)
 `MetricLogger`; [`training.py`](../../src/gpt2_rope/training.py) `evaluate`,
 `run_profiler`; profile/evaluate commands in

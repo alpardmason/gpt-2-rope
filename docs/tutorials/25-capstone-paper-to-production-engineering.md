@@ -8,6 +8,8 @@ The expanded toolchain is now in scope: justify your design with ablation
 protocol (17), an evaluation plan built on the harness (20), sweep budgets
 (21), and -- where relevant -- quantized/serving deployment impact (23, 24).
 
+**Practice companion:** [25-practice.md](practice/25-practice.md).
+
 **Source map:** the full [`src/gpt2_rope`](../../src/gpt2_rope/) package,
 [`tests`](../../tests/), [`configs`](../../configs/), [architecture notes](../architecture.md),
 and [project decisions](../../AGENTS.md).

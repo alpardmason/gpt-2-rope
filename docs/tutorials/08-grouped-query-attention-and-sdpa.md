@@ -5,6 +5,8 @@
 Implement GQA as projection geometry plus backend-aware kernel dispatch.
 Prerequisite: attention theory, 06-07, and tensor stride basics.
 
+**Practice companion:** [08-practice.md](practice/08-practice.md).
+
 **Source map:** [`model.py`](../../src/gpt2_rope/model.py)
 `GroupedQueryAttention`; [`config.py`](../../src/gpt2_rope/config.py)
 `query_groups`; [`test_model.py`](../../tests/test_model.py)
@@ -124,6 +126,14 @@ parallel head partitioning. Kernel constraints become architecture constraints.
 
 Explain GQA in three layers: parameter geometry, persistent memory economics,
 and backend dispatch. Never claim speed from FLOPs alone; profile.
+
+## Reimplementation Kata
+
+Tier 2: rebuild `GroupedQueryAttention.forward` -- projections, RoPE offset,
+cache append, expansion policy, and the prefix-aware mask -- against the
+full ablation matrix. Start with
+`UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start gqa` and
+follow [katas/gqa/README.md](../../katas/gqa/README.md).
 
 ## Further Exploration
 

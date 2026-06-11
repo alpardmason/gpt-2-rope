@@ -6,6 +6,8 @@ Turn "try a few learning rates" into a reproducible search artifact: a
 declarative space, seeded trials, ranked results, and a defensible best.
 Prerequisite: 02, 11, 14.
 
+**Practice companion:** [21-practice.md](practice/21-practice.md).
+
 **Source map:** [`sweeps.py`](../../src/gpt2_rope/sweeps.py) `SweepConfig`,
 `enumerate_assignments`, `run_sweep`, `read_objective`;
 [`config_io.py`](../../src/gpt2_rope/config_io.py) dotted overrides;

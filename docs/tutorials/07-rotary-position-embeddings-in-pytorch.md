@@ -5,6 +5,8 @@
 Connect RoPE's pairwise rotations to buffers, dtype/device policy, cached
 decoding offsets, and testable invariants. Prerequisite: RoPE theory and 06.
 
+**Practice companion:** [07-practice.md](practice/07-practice.md).
+
 **Source map:** [`rope.py`](../../src/gpt2_rope/rope.py) `rotate_half`,
 `RotaryEmbedding`; its call in
 [`GroupedQueryAttention.forward`](../../src/gpt2_rope/model.py); and
@@ -116,6 +118,13 @@ extrapolation behavior and require evaluation, not just a larger table.
 
 Separate mathematical invariants, state-management policy, numerical policy,
 and integration behavior. A paper equation is not yet a production component.
+
+## Reimplementation Kata
+
+Tier 2: rebuild `rope.py` from its contract against the production tests.
+Start with
+`UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start rope` and
+follow [katas/rope/README.md](../../katas/rope/README.md).
 
 ## Further Exploration
 

@@ -5,6 +5,8 @@
 Understand reversible byte encoding, deterministic BPE learning, persistence,
 identity, and supply-chain checks. Prerequisite: tokenizer theory.
 
+**Practice companion:** [03-practice.md](practice/03-practice.md).
+
 **Source map:** [`tokenizer.py`](../../src/gpt2_rope/tokenizer.py)
 `bytes_to_unicode`, `ByteBPETokenizer.bpe/encode/decode/train`;
 [`assets.py`](../../src/gpt2_rope/assets.py) `download_gpt2_tokenizer`;
@@ -103,6 +105,13 @@ model/data compatibility.
 
 Tokenizer correctness is model correctness. Test arbitrary Unicode, special
 tokens, deterministic training, persistence, and artifact identity.
+
+## Reimplementation Kata
+
+Tier 2: rebuild the byte map, merge loop, encode/decode, and trainer against
+the production tests. Start with
+`UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start bpe` and
+follow [katas/bpe/README.md](../../katas/bpe/README.md).
 
 ## Further Exploration
 

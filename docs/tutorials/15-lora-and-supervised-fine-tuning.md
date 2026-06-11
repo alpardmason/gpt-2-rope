@@ -5,6 +5,8 @@
 Understand low-rank module replacement, freezing, merge state, adapter
 serialization, and how SFT changes training semantics. Prerequisite: 05, 10-14.
 
+**Practice companion:** [15-practice.md](practice/15-practice.md).
+
 **Source map:** [`lora.py`](../../src/gpt2_rope/lora.py) `LoRALinear`,
 `apply_lora`, adapter state/save/load/merge functions;
 `train_finetuning` in [`training.py`](../../src/gpt2_rope/training.py);

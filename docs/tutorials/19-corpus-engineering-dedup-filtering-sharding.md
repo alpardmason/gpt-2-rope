@@ -6,6 +6,8 @@ Treat training data as an engineered artifact: deduplicated, quality-gated,
 content-addressed, and sharded, with every removal accounted for.
 Prerequisite: 03-04.
 
+**Practice companion:** [19-practice.md](practice/19-practice.md).
+
 **Source map:** [`data_quality.py`](../../src/gpt2_rope/data_quality.py)
 `deduplicate_documents`, `filter_documents`, `write_shards`,
 `minhash_signature`; [`data.py`](../../src/gpt2_rope/data.py)

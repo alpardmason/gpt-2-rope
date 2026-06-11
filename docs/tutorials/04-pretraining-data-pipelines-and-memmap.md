@@ -5,6 +5,8 @@
 Build a deterministic path from documents to bounded-memory training windows.
 Prerequisite: tutorial 03 and NumPy array basics.
 
+**Practice companion:** [04-practice.md](practice/04-practice.md).
+
 **Source map:** [`data.py`](../../src/gpt2_rope/data.py) `_read_documents`,
 `prepare_corpus`, `MemmapTokenDataset`; [`test_data.py`](../../tests/test_data.py);
 and `data prepare` in [`cli.py`](../../src/gpt2_rope/cli.py).

@@ -5,6 +5,8 @@
 Read a decoder implementation through tensor contracts, parameter ownership,
 initialization, and objective semantics. Prerequisite: GPT-2 theory and 00-05.
 
+**Practice companion:** [06-practice.md](practice/06-practice.md).
+
 **Source map:** [`model.py`](../../src/gpt2_rope/model.py) `CausalLMOutput`,
 `MLP`, `TransformerBlock`, `GPT`; [`config.py`](../../src/gpt2_rope/config.py)
 `ModelConfig`; and [`test_model.py`](../../tests/test_model.py).

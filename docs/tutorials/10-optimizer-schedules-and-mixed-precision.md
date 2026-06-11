@@ -5,6 +5,8 @@
 Understand optimizer parameter policy, learning-rate time, autocast, scaling,
 and clipping as one ordered system. Prerequisite: 06 and backpropagation.
 
+**Practice companion:** [10-practice.md](practice/10-practice.md).
+
 **Source map:** [`model.py`](../../src/gpt2_rope/model.py)
 `GPT.configure_optimizer`; [`training.py`](../../src/gpt2_rope/training.py)
 `cosine_learning_rate`, `_effective_precision`, `_autocast_context`; and

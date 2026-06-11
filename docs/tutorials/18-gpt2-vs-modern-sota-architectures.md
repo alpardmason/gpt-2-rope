@@ -8,6 +8,8 @@ rather than fashion. Prerequisite: 06-09, 17. This chapter changes no code:
 the project deliberately stays GPT-2-shaped so every modern delta is visible
 against a fixed reference.
 
+**Practice companion:** [18-practice.md](practice/18-practice.md).
+
 **Source map:** [`model.py`](../../src/gpt2_rope/model.py) as the reference
 implementation; [`architecture.md`](../architecture.md) for the summary.
 

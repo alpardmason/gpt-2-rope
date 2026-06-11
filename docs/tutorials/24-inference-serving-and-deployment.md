@@ -7,6 +7,8 @@ batching, and latency observability -- and understand precisely which
 problems vLLM-class servers solve that this one does not. Prerequisite: 09,
 14, 23. Install the extra: `uv sync --extra serving`.
 
+**Practice companion:** [24-practice.md](practice/24-practice.md).
+
 **Source map:** [`serving.py`](../../src/gpt2_rope/serving.py)
 `GenerateRequest`, `InferenceService`, `group_compatible`, `create_app`;
 [`cli.py`](../../src/gpt2_rope/cli.py) `serve`;

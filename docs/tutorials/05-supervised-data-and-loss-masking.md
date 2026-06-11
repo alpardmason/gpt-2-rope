@@ -5,6 +5,8 @@
 Understand SFT example construction as an objective-design problem, not merely
 JSON parsing. Prerequisite: tutorials 03-04 and causal cross entropy.
 
+**Practice companion:** [05-practice.md](practice/05-practice.md).
+
 **Source map:** [`data.py`](../../src/gpt2_rope/data.py) `build_sft_example`,
 `SFTDataset`, `collate_sft`; [`model.py`](../../src/gpt2_rope/model.py)
 `GPT.forward`; [`test_data.py`](../../tests/test_data.py); and

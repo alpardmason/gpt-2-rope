@@ -5,6 +5,8 @@
 Understand DDP process topology, data partitioning, gradient synchronization,
 accumulation, rank ownership, and reproducibility boundaries. Prerequisite: 11.
 
+**Practice companion:** [12-practice.md](practice/12-practice.md).
+
 **Source map:** [`training.py`](../../src/gpt2_rope/training.py)
 `initialize_distributed`, `seed_everything`, training wrappers;
 [`test_distributed.py`](../../tests/test_distributed.py); and operational notes

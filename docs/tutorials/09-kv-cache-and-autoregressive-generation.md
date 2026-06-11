@@ -5,6 +5,8 @@
 Understand prefill/decode state, cache correctness, sampling transforms, EOS
 state, and deterministic random generators. Prerequisite: 07-08.
 
+**Practice companion:** [09-practice.md](practice/09-practice.md).
+
 **Source map:** [`generation.py`](../../src/gpt2_rope/generation.py)
 `_apply_repetition_penalty`, `sample_next_token`, `generate`;
 [`model.py`](../../src/gpt2_rope/model.py) cache paths; and
@@ -123,6 +125,14 @@ constraints, quantization, and latency/service-level metrics.
 Treat decoding as a state machine with separate model, cache, sampling, and
 batch-lifecycle contracts. Correct logits are necessary but not sufficient for
 a reliable serving path.
+
+## Reimplementation Kata
+
+Tier 2: rebuild `generation.py` -- prefill, single-token decode steps,
+sampling controls, and EOS handling -- against the determinism and serving
+tests. Start with
+`UV_CACHE_DIR=.uv-cache uv run python scripts/make_kata.py start kv-cache`
+and follow [katas/kv-cache/README.md](../../katas/kv-cache/README.md).
 
 ## Further Exploration
 

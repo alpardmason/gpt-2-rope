@@ -6,6 +6,8 @@ Compare frameworks by state, execution, transformation, device, and debugging
 models rather than syntax. Prerequisite: 06-15. This chapter is conceptual; the
 repository does not claim tested JAX or MLX ports.
 
+**Practice companion:** [16-practice.md](practice/16-practice.md).
+
 **Source map:** [`model.py`](../../src/gpt2_rope/model.py),
 [`training.py`](../../src/gpt2_rope/training.py),
 [`checkpoint.py`](../../src/gpt2_rope/checkpoint.py), and

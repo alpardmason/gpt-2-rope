@@ -6,6 +6,8 @@ Quantize trained weights to INT8 for inference, quantify the quality cost
 with the evaluation harness, and place weight-only quantization in the wider
 GPTQ/AWQ/FP8 landscape. Prerequisite: 06, 13, 20.
 
+**Practice companion:** [23-practice.md](practice/23-practice.md).
+
 **Source map:** [`quantization.py`](../../src/gpt2_rope/quantization.py)
 `QuantizedLinear`, `quantize_model`, `quantization_report`,
 `save_quantized`, `load_quantized`; [`cli.py`](../../src/gpt2_rope/cli.py)
