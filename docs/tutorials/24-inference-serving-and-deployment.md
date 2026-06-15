@@ -11,8 +11,10 @@ problems vLLM-class servers solve that this one does not. Prerequisite: 09,
 
 **Source map:** [`serving.py`](../../src/gpt2_rope/serving.py)
 `GenerateRequest`, `InferenceService`, `group_compatible`, `create_app`;
-[`cli.py`](../../src/gpt2_rope/cli.py) `serve`;
-[`test_serving.py`](../../tests/test_serving.py).
+[`benchmarking.py`](../../src/gpt2_rope/benchmarking.py)
+`benchmark_inference`; [`cli.py`](../../src/gpt2_rope/cli.py) `serve`,
+`benchmark inference`; [`test_serving.py`](../../tests/test_serving.py);
+[`test_benchmarking.py`](../../tests/test_benchmarking.py).
 
 ## Service Contract
 
@@ -68,6 +70,27 @@ TorchServe-style wrappers when latency targets are loose.
 training metrics (chapter 14). A serving system without per-request latency
 accounting cannot be capacity-planned or debugged; the metrics file is the
 SLO evidence.
+
+## Reproducible Inference Benchmarks
+
+The HTTP metrics answer what happened under request load. The benchmark
+command isolates model execution and writes a comparable JSON artifact:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run gpt2-rope benchmark inference configs/tiny.yaml \
+  runs/tiny/checkpoints/step-00010000 \
+  --batch-size 1 --prompt-tokens 64 --generated-tokens 32 \
+  --output runs/benchmarks/tiny.json
+```
+
+The report separates time to first token (prefill) from cached decode,
+records output/decode tokens per second, accounts for live KV-cache bytes and
+the equivalent MHA cache, and captures peak CUDA allocation. It uses a
+deterministic random-token workload and records the seed plus model geometry.
+Warmup runs are excluded, and CUDA/MPS are explicitly synchronized around
+timing boundaries; without synchronization, host-side launch time would be
+mislabeled as model latency. Results are evidence only for the recorded
+device, precision, batch, prompt length, and generation length.
 
 ## Failure Analysis
 

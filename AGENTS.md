@@ -45,6 +45,13 @@
 - Fix: launch with `--master-addr=127.0.0.1 --master-port=<free-port>`.
 - Prevention: prefer explicit IPv4 rendezvous settings for local macOS DDP.
 
+### Accelerator inference latency is implausibly low
+
+- Symptom: CUDA or MPS latency resembles Python dispatch time and varies wildly.
+- Root cause: accelerator kernels execute asynchronously past the host timer.
+- Fix: synchronize the target device before and after each timed phase.
+- Prevention: use the benchmark harness and retain its synchronization tests.
+
 ## Key Technical Decisions
 
 ### GPT-2 fidelity with deliberate GQA/RoPE incompatibility
@@ -119,6 +126,18 @@
 - Alternatives: integrating a tracking server or hosted sweep scheduler.
 - Rationale: file-based evidence is failure-proof, reviewable, and testable;
   hosted tools change the scheduler, not the artifact discipline being taught.
+
+### Phase-separated inference benchmarks
+
+- Decision: benchmark prefill and cached decode separately, with accelerator
+  synchronization, warmup exclusion, KV-cache byte accounting, peak CUDA
+  allocation, and a versioned JSON report.
+- Context: serving metrics alone mix queueing, batching, tokenization, and model
+  execution, making optimization claims difficult to reproduce.
+- Alternatives: report only HTTP latency, use profiler traces as benchmark
+  output, or adopt an external load generator before defining model baselines.
+- Rationale: a small native harness produces portable evidence now and provides
+  the baseline needed for later vLLM, Triton, quantization, and GPU comparisons.
 
 ### Tiered practice loop (companions, notes contract, katas)
 

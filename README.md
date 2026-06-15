@@ -78,6 +78,8 @@ uv run gpt2-rope sweep run configs/sweeps/lr.yaml        # hyperparameter search
 uv run gpt2-rope dpo configs/dpo.yaml                    # preference tuning
 uv run gpt2-rope checkpoint quantize configs/tiny.yaml \
   runs/tiny/checkpoints/step-XXXXXXXX model-int8.safetensors
+uv run gpt2-rope benchmark inference configs/tiny.yaml \
+  runs/tiny/checkpoints/step-XXXXXXXX --output runs/benchmarks/tiny.json
 uv sync --extra serving && uv run gpt2-rope serve configs/tiny.yaml \
   runs/tiny/checkpoints/step-XXXXXXXX                    # HTTP inference
 ```
@@ -117,5 +119,5 @@ Tests cover tensor geometry, RoPE invariants, cache equivalence across all
 ablation variants, tokenizer round-trips and determinism, packed data, SFT
 masking, LoRA merging, sampling, exact checkpoint restoration, end-to-end
 training smoke and resume reproducibility, dedup/filter/shard accounting,
-evaluation scoring, sweep mechanics, DPO loss and training, INT8 parity, and
-the serving API.
+evaluation scoring, sweep mechanics, DPO loss and training, INT8 parity,
+inference benchmark accounting, and the serving API.

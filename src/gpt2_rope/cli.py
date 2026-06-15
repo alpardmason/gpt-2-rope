@@ -11,6 +11,7 @@ import torch
 import typer
 
 from gpt2_rope.assets import download_gpt2_tokenizer
+from gpt2_rope.benchmarking import benchmark_inference
 from gpt2_rope.checkpoint import export_safetensors
 from gpt2_rope.config import GenerationConfig, ProfilingConfig
 from gpt2_rope.config_io import load_experiment_config
@@ -49,11 +50,13 @@ data_app = typer.Typer(help="Prepare, clean, and shard token datasets.")
 checkpoint_app = typer.Typer(help="Inspect, export, and quantize checkpoints.")
 eval_app = typer.Typer(help="Perplexity suites, logprob tasks, and passkey probes.")
 sweep_app = typer.Typer(help="Local grid/random hyperparameter sweeps.")
+benchmark_app = typer.Typer(help="Reproducible model performance benchmarks.")
 app.add_typer(tokenizer_app, name="tokenizer")
 app.add_typer(data_app, name="data")
 app.add_typer(checkpoint_app, name="checkpoint")
 app.add_typer(eval_app, name="eval")
 app.add_typer(sweep_app, name="sweep")
+app.add_typer(benchmark_app, name="benchmark")
 
 
 def _tokenizer(directory: Path) -> ByteBPETokenizer:
@@ -406,6 +409,41 @@ def profile_model(
         ProfilingConfig(),
         use_cuda=device.type == "cuda",
     )
+
+
+@benchmark_app.command("inference")
+def benchmark_inference_command(
+    config_path: Annotated[Path, typer.Argument()],
+    checkpoint: Annotated[Path, typer.Argument()],
+    output: Annotated[
+        Path | None,
+        typer.Option(help="Optional JSON output for comparison across devices."),
+    ] = None,
+    batch_size: Annotated[int, typer.Option(min=1)] = 1,
+    prompt_tokens: Annotated[int, typer.Option(min=1)] = 128,
+    generated_tokens: Annotated[int, typer.Option(min=2)] = 32,
+    warmup_runs: Annotated[int, typer.Option(min=0)] = 2,
+    measured_runs: Annotated[int, typer.Option(min=1)] = 5,
+) -> None:
+    """Benchmark prefill, cached decoding, KV-cache bytes, and peak memory."""
+    config = load_experiment_config(config_path)
+    device = resolve_device(config.training.device)
+    report = benchmark_inference(
+        _load_model(config_path, checkpoint, device),
+        device,
+        batch_size=batch_size,
+        prompt_tokens=prompt_tokens,
+        generated_tokens=generated_tokens,
+        warmup_runs=warmup_runs,
+        measured_runs=measured_runs,
+        precision=config.training.precision,
+        seed=config.training.seed,
+    )
+    payload = json.dumps(report.as_dict(), indent=2, sort_keys=True)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(payload + "\n", encoding="utf-8")
+    typer.echo(payload)
 
 
 @app.command("serve")
