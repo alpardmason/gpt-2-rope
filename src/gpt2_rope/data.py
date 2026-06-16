@@ -17,6 +17,17 @@ from gpt2_rope.tokenizer import ByteBPETokenizer
 
 
 def read_documents(paths: Sequence[Path]) -> Iterator[str]:
+    """Yield one training document per source record or plain-text line.
+
+    JSONL rows must contain ``text`` or both ``prompt`` and ``response``; plain
+    files yield every non-empty line. Empty JSONL rows are skipped.
+
+    Args:
+        paths: Source files in UTF-8 plain text or JSONL format.
+
+    Returns:
+        An iterator of document strings, one per record or non-empty line.
+    """
     for path in paths:
         if path.suffix == ".jsonl":
             for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -43,7 +54,23 @@ def prepare_corpus(
     tokenizer: ByteBPETokenizer,
     validation_fraction: float = 0.01,
 ) -> dict[str, Any]:
-    """Tokenize documents into deterministic uint16 train/validation streams."""
+    """Tokenize documents into deterministic uint16 train/validation streams.
+
+    Documents split in file order (no shuffling), each encoded with an appended
+    EOS, written to ``train.bin``/``validation.bin``, and summarized in
+    ``manifest.json`` with tokenizer identity and source SHA-256 hashes.
+
+    Args:
+        paths: Source corpus files to read via :func:`read_documents`.
+        output_dir: Directory that receives ``train.bin``, ``validation.bin``,
+            and ``manifest.json``.
+        tokenizer: Tokenizer used to encode every document.
+        validation_fraction: Fraction of documents reserved for validation;
+            must lie in ``[0, 1)``.
+
+    Returns:
+        The manifest dictionary written to ``manifest.json``.
+    """
     if not 0 <= validation_fraction < 1:
         raise ValueError("validation_fraction must be in [0, 1)")
     documents = list(read_documents(paths))
@@ -85,9 +112,23 @@ def prepare_corpus(
 
 
 class MemmapTokenDataset(Dataset[tuple[Tensor, Tensor]]):
-    """Map contiguous token windows without loading the corpus into RAM."""
+    """Map contiguous token windows without loading the corpus into RAM.
+
+    Each sample returns shifted input/target pairs of length ``sequence_length``
+    over a uint16 memory-mapped token stream.
+    """
 
     def __init__(self, path: Path, sequence_length: int) -> None:
+        """Open ``path`` for read-only windowed sampling.
+
+        Args:
+            path: Path to a uint16 token stream produced by
+                :func:`prepare_corpus`.
+            sequence_length: Number of input tokens per training window.
+
+        Returns:
+            None
+        """
         self.path = path
         self.sequence_length = sequence_length
         self.tokens = np.memmap(path, mode="r", dtype=np.uint16)
@@ -95,9 +136,26 @@ class MemmapTokenDataset(Dataset[tuple[Tensor, Tensor]]):
             raise ValueError(f"{path} has too few tokens for sequence length {sequence_length}")
 
     def __len__(self) -> int:
+        """Return the number of non-overlapping windows in the memmap.
+
+        Returns:
+            The count of fixed-length windows that fit in the token stream.
+        """
         return (self.tokens.size - 1) // self.sequence_length
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
+        """Return ``(input_ids, labels)`` tensors for window ``index``.
+
+        ``labels`` are a one-step shift of ``input_ids``; both are ``int64``
+        copies suitable for embedding lookup and cross entropy.
+
+        Args:
+            index: Zero-based window index; must satisfy
+                ``0 <= index < len(self)``.
+
+        Returns:
+            A pair of ``int64`` tensors of shape ``(sequence_length,)``.
+        """
         if index < 0 or index >= len(self):
             raise IndexError(index)
         start = index * self.sequence_length
@@ -114,6 +172,23 @@ def build_sft_example(
     tokenizer: ByteBPETokenizer,
     max_length: int,
 ) -> tuple[list[int], list[int]]:
+    """Construct one supervised example with prompt labels masked by ``-100``.
+
+    Truncation keeps the full response (and EOS) when possible, dropping the
+    leftmost prompt tokens first; an overlong response alone is truncated to
+    ``max_length`` with a forced final EOS and no prompt context.
+
+    Args:
+        prompt: Instruction or context prefix; its tokens receive label
+            ``-100``.
+        response: Target completion; must be non-empty.
+        tokenizer: Tokenizer used to encode ``prompt`` and ``response``.
+        max_length: Maximum total tokens in the returned example.
+
+    Returns:
+        ``(input_ids, labels)`` lists of equal length, with prompt positions
+        masked in ``labels``.
+    """
     if not response:
         raise ValueError("response must contain at least one character")
     prompt_ids = tokenizer.encode(prompt)
@@ -132,7 +207,20 @@ def build_sft_example(
 
 
 class SFTDataset(Dataset[tuple[Tensor, Tensor]]):
+    """Load JSONL prompt/response pairs for causal fine-tuning."""
+
     def __init__(self, path: Path, tokenizer: ByteBPETokenizer, max_length: int) -> None:
+        """Parse ``path`` and materialize masked examples up to ``max_length``.
+
+        Args:
+            path: JSONL file whose rows contain ``prompt`` and ``response``
+                string fields.
+            tokenizer: Tokenizer passed to :func:`build_sft_example`.
+            max_length: Maximum tokens per example after truncation.
+
+        Returns:
+            None
+        """
         self.examples: list[tuple[list[int], list[int]]] = []
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip():
@@ -152,9 +240,23 @@ class SFTDataset(Dataset[tuple[Tensor, Tensor]]):
             raise ValueError("fine-tuning dataset contains no examples")
 
     def __len__(self) -> int:
+        """Return the number of supervised examples.
+
+        Returns:
+            The number of parsed JSONL rows.
+        """
         return len(self.examples)
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
+        """Return ``(input_ids, labels)`` tensors for example ``index``.
+
+        Args:
+            index: Zero-based example index; must satisfy
+                ``0 <= index < len(self)``.
+
+        Returns:
+            A pair of ``long`` tensors with matching one-dimensional shapes.
+        """
         input_ids, labels = self.examples[index]
         return torch.tensor(input_ids), torch.tensor(labels)
 
@@ -163,6 +265,20 @@ def collate_sft(
     batch: Sequence[tuple[Tensor, Tensor]],
     pad_token_id: int,
 ) -> tuple[Tensor, Tensor]:
+    """Right-pad a batch of variable-length SFT examples.
+
+    Inputs pad with ``pad_token_id``; labels pad with ``-100`` so loss ignores
+    padding positions.
+
+    Args:
+        batch: Variable-length ``(input_ids, labels)`` pairs from
+            :class:`SFTDataset`.
+        pad_token_id: Fill value for padded input positions, typically EOS.
+
+    Returns:
+        Batched ``(input_ids, labels)`` tensors of shape
+        ``(batch_size, max_length)``.
+    """
     max_length = max(input_ids.numel() for input_ids, _ in batch)
     input_batch = torch.full((len(batch), max_length), pad_token_id, dtype=torch.long)
     label_batch = torch.full((len(batch), max_length), -100, dtype=torch.long)
