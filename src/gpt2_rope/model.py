@@ -168,9 +168,7 @@ class GPT(nn.Module):
             # Original GPT-2 wpe table; the ablation alternative to RoPE.
             self.position_embedding = nn.Embedding(config.context_length, config.d_model)
         self.embedding_dropout = nn.Dropout(config.dropout)
-        self.blocks = nn.ModuleList(
-            TransformerBlock(config) for _ in range(config.num_layers)
-        )
+        self.blocks = nn.ModuleList(TransformerBlock(config) for _ in range(config.num_layers))
         self.final_layer_norm = nn.LayerNorm(config.d_model, eps=config.layer_norm_epsilon)
         self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
         self.apply(self._initialize_weights)
@@ -218,12 +216,15 @@ class GPT(nn.Module):
         for index, block in enumerate(self.blocks):
             past = None if past_key_values is None else past_key_values[index]
             if self.config.gradient_checkpointing and self.training:
-                hidden_states, present = checkpoint(
-                    block,
-                    hidden_states,
-                    past,
-                    False,
-                    use_reentrant=False,
+                hidden_states, present = cast(
+                    tuple[Tensor, KVCache],
+                    checkpoint(
+                        block,
+                        hidden_states,
+                        past,
+                        False,
+                        use_reentrant=False,
+                    ),
                 )
             else:
                 hidden_states, present = block(hidden_states, past, use_cache)
