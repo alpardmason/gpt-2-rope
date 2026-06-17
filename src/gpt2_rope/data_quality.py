@@ -22,7 +22,21 @@ _WHITESPACE = re.compile(r"\s+")
 
 
 class FilterThresholds(BaseModel):
-    """Heuristic document-quality gates with conservative defaults."""
+    """Heuristic document-quality gates with conservative defaults.
+
+    Each threshold rejects documents that fail a length, repetition, or
+    character-composition check. Defaults are tuned for tutorial-scale corpora
+    and reject obvious boilerplate or non-text noise without aggressive
+    filtering.
+
+    Attributes:
+        min_chars: Minimum document length in characters.
+        max_chars: Maximum document length in characters.
+        max_word_repetition_ratio: Upper bound on the fraction of repeated
+            words; see :func:`word_repetition_ratio`.
+        max_non_alpha_ratio: Upper bound on the fraction of non-alphanumeric
+            characters; see :func:`non_alpha_ratio`.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -34,11 +48,26 @@ class FilterThresholds(BaseModel):
 
 @dataclass(slots=True)
 class DedupReport:
+    """Aggregate counts from :func:`deduplicate_documents`.
+
+    Attributes:
+        kept: Number of documents retained after deduplication.
+        exact_duplicates: Documents dropped because their normalized hash
+            matched an earlier document.
+        near_duplicates: Documents dropped because their MinHash signature
+            exceeded the Jaccard threshold against a kept document.
+    """
+
     kept: int = 0
     exact_duplicates: int = 0
     near_duplicates: int = 0
 
     def as_dict(self) -> dict[str, int]:
+        """Serialize deduplication counters for logging or manifests.
+
+        Returns:
+            A mapping of report field names to integer counts.
+        """
         return {
             "kept": self.kept,
             "exact_duplicates": self.exact_duplicates,
@@ -48,23 +77,65 @@ class DedupReport:
 
 @dataclass(slots=True)
 class FilterReport:
+    """Aggregate counts from :func:`filter_documents`.
+
+    Attributes:
+        kept: Number of documents that passed every quality gate.
+        rejected: Per-reason rejection counts keyed by gate name
+            (for example ``"too_short"`` or ``"repetitive"``).
+    """
+
     kept: int = 0
     rejected: dict[str, int] = field(default_factory=dict)
 
     def reject(self, reason: str) -> None:
+        """Increment the rejection counter for ``reason``.
+
+        Args:
+            reason: Stable gate identifier recorded in the report.
+
+        Returns:
+            None
+        """
         self.rejected[reason] = self.rejected.get(reason, 0) + 1
 
     def as_dict(self) -> dict[str, object]:
+        """Serialize filter counters for logging or manifests.
+
+        Returns:
+            A dictionary with ``kept`` and a sorted ``rejected`` mapping.
+        """
         return {"kept": self.kept, "rejected": dict(sorted(self.rejected.items()))}
 
 
 def normalized_content_hash(text: str) -> str:
-    """Whitespace-insensitive SHA-256 used for exact deduplication."""
+    """Compute a whitespace-insensitive SHA-256 digest for exact deduplication.
+
+    Collapses internal whitespace, strips leading and trailing space, then
+    hashes the canonical UTF-8 bytes so formatting-only differences map to
+    the same key.
+
+    Args:
+        text: Raw document text.
+
+    Returns:
+        Lowercase hexadecimal SHA-256 digest of the canonical form.
+    """
     canonical = _WHITESPACE.sub(" ", text).strip()
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _shingles(text: str, shingle_size: int) -> set[str]:
+    """Build lowercase word shingles for MinHash fingerprinting.
+
+    Args:
+        text: Raw document text.
+        shingle_size: Number of consecutive words per shingle.
+
+    Returns:
+        The set of distinct shingles; a single shingle when the document is
+        shorter than ``shingle_size``, or an empty set for blank input.
+    """
     words = _WHITESPACE.sub(" ", text).strip().lower().split(" ")
     if len(words) < shingle_size:
         return {" ".join(words)} if words != [""] else set()
@@ -76,7 +147,21 @@ def minhash_signature(
     num_hashes: int = 64,
     shingle_size: int = 3,
 ) -> tuple[int, ...]:
-    """Deterministic MinHash signature over lowercase word shingles."""
+    """Compute a deterministic MinHash signature over lowercase word shingles.
+
+    Each hash function is a seeded BLAKE2b minimum over shingle digests,
+    yielding a fixed-length signature suitable for approximate Jaccard
+    comparison.
+
+    Args:
+        text: Raw document text.
+        num_hashes: Number of independent hash functions (signature length).
+        shingle_size: Number of consecutive words per shingle.
+
+    Returns:
+        A tuple of ``num_hashes`` integer minimum-hash values; all zeros when
+        the document yields no shingles.
+    """
     shingles = _shingles(text, shingle_size)
     if not shingles:
         return tuple([0] * num_hashes)
@@ -99,6 +184,22 @@ def minhash_signature(
 
 
 def estimated_jaccard(left: Sequence[int], right: Sequence[int]) -> float:
+    """Estimate set Jaccard similarity from two MinHash signatures.
+
+    Uses the fraction of matching hash positions, which is an unbiased
+    estimator of Jaccard similarity when signatures are built with the same
+    parameters.
+
+    Args:
+        left: First MinHash signature.
+        right: Second MinHash signature of equal length.
+
+    Returns:
+        The fraction of positions where ``left`` and ``right`` agree.
+
+    Raises:
+        ValueError: If either signature is empty or the lengths differ.
+    """
     if len(left) != len(right) or not left:
         raise ValueError("signatures must be non-empty and equal length")
     matches = sum(1 for a, b in zip(left, right, strict=True) if a == b)
@@ -114,8 +215,23 @@ def deduplicate_documents(
 ) -> tuple[list[str], DedupReport]:
     """Drop exact duplicates, then near-duplicates above the Jaccard threshold.
 
-    Near-duplicate comparison is O(n^2) against kept documents, which is fine
-    at tutorial scale; production systems bucket signatures with LSH instead.
+    Exact deduplication uses :func:`normalized_content_hash`. Near-duplicate
+    detection compares MinHash signatures against every kept document; this
+    is ``O(n^2)`` and fine at tutorial scale—production systems bucket
+    signatures with LSH instead.
+
+    Args:
+        documents: Corpus in encounter order; only the first occurrence of
+            each duplicate is retained.
+        near_duplicate_threshold: Minimum estimated Jaccard similarity to
+            treat two documents as near-duplicates. Pass ``None`` to skip
+            near-duplicate detection and keep exact-dedup only.
+        num_hashes: Signature length for :func:`minhash_signature`.
+        shingle_size: Shingle width for :func:`minhash_signature`.
+
+    Returns:
+        A pair of the kept document list and a :class:`DedupReport` with
+        per-category drop counts.
     """
     report = DedupReport()
     kept: list[str] = []
@@ -142,7 +258,16 @@ def deduplicate_documents(
 
 
 def word_repetition_ratio(text: str) -> float:
-    """Fraction of words that are repeats of an earlier word (0 = all unique)."""
+    """Measure how repetitive a document is at the word level.
+
+    Args:
+        text: Raw document text.
+
+    Returns:
+        The fraction of words that repeat an earlier word in the document
+        (``0.0`` when every word is unique, ``1.0`` for empty or
+        whitespace-only input).
+    """
     words = _WHITESPACE.sub(" ", text).strip().lower().split(" ")
     if not words or words == [""]:
         return 1.0
@@ -151,7 +276,15 @@ def word_repetition_ratio(text: str) -> float:
 
 
 def non_alpha_ratio(text: str) -> float:
-    """Fraction of non-whitespace characters that are not alphanumeric."""
+    """Measure the fraction of non-alphanumeric characters in a document.
+
+    Args:
+        text: Raw document text.
+
+    Returns:
+        The fraction of non-whitespace characters that are not alphanumeric
+        (``1.0`` when the document contains no significant characters).
+    """
     significant = [character for character in text if not character.isspace()]
     if not significant:
         return 1.0
@@ -162,7 +295,21 @@ def filter_documents(
     documents: Iterable[str],
     thresholds: FilterThresholds | None = None,
 ) -> tuple[list[str], FilterReport]:
-    """Apply heuristic gates and account for every rejection by reason."""
+    """Apply heuristic quality gates and account for every rejection by reason.
+
+    Documents are evaluated in order against :class:`FilterThresholds`. The
+    first failing gate determines the rejection reason; no document is counted
+    against more than one gate.
+
+    Args:
+        documents: Corpus to filter in encounter order.
+        thresholds: Quality gates to apply; defaults to
+            :class:`FilterThresholds` when omitted.
+
+    Returns:
+        A pair of the kept document list and a :class:`FilterReport` with
+        per-reason rejection counts.
+    """
     thresholds = thresholds or FilterThresholds()
     report = FilterReport()
     kept: list[str] = []
@@ -189,7 +336,25 @@ def write_shards(
     documents_per_shard: int = 10_000,
     prefix: str = "shard",
 ) -> dict[str, object]:
-    """Write fixed-size document shards plus a content-addressed manifest."""
+    """Write fixed-size document shards plus a content-addressed manifest.
+
+    Each shard is a newline-delimited UTF-8 text file. ``shards.json`` records
+    shard paths, document counts, and SHA-256 digests of shard payloads for
+    reproducible provenance.
+
+    Args:
+        documents: Ordered corpus to partition into shards.
+        output_dir: Directory that receives shard files and ``shards.json``.
+        documents_per_shard: Maximum documents written to each shard file.
+        prefix: Filename stem for shard files (for example ``shard-00000.txt``).
+
+    Returns:
+        The manifest dictionary also written to ``output_dir/shards.json``.
+
+    Raises:
+        ValueError: If ``documents`` is empty or ``documents_per_shard`` is
+            less than one.
+    """
     if not documents:
         raise ValueError("cannot shard an empty document list")
     if documents_per_shard < 1:
