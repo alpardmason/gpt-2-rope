@@ -28,7 +28,7 @@ class RotaryEmbedding(nn.Module):
         inverse_frequency = 1.0 / (
             base ** (torch.arange(0, head_dim, 2, dtype=torch.float32) / head_dim)
         )
-        positions = torch.arange(max_position_embeddings, dtype=torch.float32)
+        positions = torch.arange(0, max_position_embeddings, dtype=torch.float32)
         frequencies = torch.outer(positions, inverse_frequency)
         angles = torch.repeat_interleave(frequencies, 2, dim=-1)
         self.cos_cached: Tensor
